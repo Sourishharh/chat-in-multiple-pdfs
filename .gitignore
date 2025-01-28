@@ -1,0 +1,13 @@
+# Python bytecode files
+*.pyc
+*.pyo
+__pycache__/
+
+# Virtual environment
+venv/
+
+# .env file for sensitive keys
+.env
+
+# Streamlit file cache
+.streamlit/
