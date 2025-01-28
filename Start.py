@@ -34,7 +34,7 @@ def get_vector_store(text_chunks):
     embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
     vector_store = FAISS.from_texts(text_chunks, embedding=embeddings)
     st.session_state.vector_store = vector_store
-    st.write("Semantic index created with chunks :")
+    # st.write("Semantic index created with chunks :")
     # for chunk in text_chunks:
     #     st.write(chunk[:500])  # Display the first 500 characters of each chunk
 
