@@ -82,7 +82,7 @@ def user_input(user_question):
                 "chat_history": st.session_state.chat_history
             })
 
-            st.write("Raw response:", response)  # Debugging the structure of the response
+            st.write("Raw response:", response) # Debugging the structure of the response
 
             # Extract the answer based on the observed structure of the response
             if isinstance(response, dict) and "output_text" in response:
