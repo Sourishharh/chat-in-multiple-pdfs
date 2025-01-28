@@ -35,8 +35,8 @@ def get_vector_store(text_chunks):
     vector_store = FAISS.from_texts(text_chunks, embedding=embeddings)
     st.session_state.vector_store = vector_store
     st.write("Semantic index created with chunks :")
-    for chunk in text_chunks:
-        st.write(chunk[:500])  # Display the first 500 characters of each chunk
+    # for chunk in text_chunks:
+    #     st.write(chunk[:500])  # Display the first 500 characters of each chunk
 
 # Set up the conversational chain & LLM
 def get_conversational_chain():
@@ -71,9 +71,9 @@ def user_input(user_question):
             st.write("No documents retrieved for the query.")
             return
 
-        st.write("Retrieved documents:")
-        for doc in docs:
-            st.write(doc.page_content[:500])  # Display the first 500 characters of each document
+        # st.write("Retrieved documents:")
+        # for doc in docs:
+        #     st.write(doc.page_content[:500])  # Display the first 500 characters of each document
 
         try:
             response = st.session_state.chat_chain.invoke({
@@ -82,7 +82,7 @@ def user_input(user_question):
                 "chat_history": st.session_state.chat_history
             })
 
-            st.write("Raw response:", response) # Debugging the structure of the response
+            # st.write("Raw response:", response) # Debugging the structure of the response
 
             # Extract the answer based on the observed structure of the response
             if isinstance(response, dict) and "output_text" in response:
