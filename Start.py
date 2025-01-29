@@ -5,17 +5,24 @@ import os
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 import google.generativeai as genai
 from langchain.vectorstores import FAISS
-# from langchain_community.vectorstores import FAISS
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.chains.question_answering import load_qa_chain
 from langchain.prompts import PromptTemplate
 from dotenv import load_dotenv
+import logging
 
-
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Load environment variables 
 load_dotenv()
-genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+if not GOOGLE_API_KEY:
+    st.error("GOOGLE_API_KEY is not set in the .env file.")
+    st.stop()
+
+genai.configure(api_key=GOOGLE_API_KEY)
 
 # Extract text from PDFs
 def get_pdf_text(pdf_docs):
@@ -28,18 +35,23 @@ def get_pdf_text(pdf_docs):
 
 # Split text into chunks
 def get_text_chunks(text):
+    if not text:
+        return []
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
     chunks = text_splitter.split_text(text)
     return chunks
 
 # Create embeddings and vector store
 def get_vector_store(text_chunks):
-    embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
-    vector_store = FAISS.from_texts(text_chunks, embedding=embeddings)
-    st.session_state.vector_store = vector_store
-    # st.write("Semantic index created with chunks :")
-    # for chunk in text_chunks:
-    #     st.write(chunk[:500])  # Display the first 500 characters of each chunk
+    try:
+        embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
+        vector_store = FAISS.from_texts(text_chunks, embedding=embeddings)
+        st.session_state.vector_store = vector_store
+        logger.info("Vector store created successfully.")
+    except Exception as e:
+        logger.error(f"Error creating vector store: {e}")
+        st.error(f"Error creating vector store: {e}")
+        st.stop()
 
 # Set up the conversational chain & LLM
 def get_conversational_chain():
@@ -74,18 +86,12 @@ def user_input(user_question):
             st.write("No documents retrieved for the query.")
             return
 
-        # st.write("Retrieved documents:")
-        # for doc in docs:
-        #     st.write(doc.page_content[:500])  # Display the first 500 characters of each document
-
         try:
             response = st.session_state.chat_chain.invoke({
                 "input_documents": docs,
                 "question": user_question,
                 "chat_history": st.session_state.chat_history
             })
-
-            # st.write("Raw response:", response) # Debugging the structure of the response
 
             # Extract the answer based on the observed structure of the response
             if isinstance(response, dict) and "output_text" in response:
@@ -138,9 +144,12 @@ def main():
                     raw_text = get_pdf_text(pdf_docs)
                     if raw_text:
                         text_chunks = get_text_chunks(raw_text)
-                        get_vector_store(text_chunks)
-                        st.session_state.chat_chain = get_conversational_chain()
-                        st.success("PDF processing complete! You can now ask questions.")
+                        if text_chunks:
+                            get_vector_store(text_chunks)
+                            st.session_state.chat_chain = get_conversational_chain()
+                            st.success("PDF processing complete! You can now ask questions.")
+                        else:
+                            st.error("No text chunks could be created from the extracted text.")
                     else:
                         st.error("No text could be extracted from the uploaded PDFs.")
             else:
