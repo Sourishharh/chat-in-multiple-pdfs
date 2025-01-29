@@ -93,7 +93,7 @@ def user_input(user_question):
                 answer = "Unexpected response format. Please check the response structure."
 
             st.session_state.chat_history.append((user_question, answer))
-            st.write("Reply: ", answer)
+            st.write("Reply :  ",  answer)
 
         except Exception as e:
             st.error(f"Error during response generation: {e}")
