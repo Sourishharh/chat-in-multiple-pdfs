@@ -1,6 +1,6 @@
 streamlit
 langchain
-langchain-community
+langchain-community # it is used if we used langchain-community instead of langchain
 langchain-google-genai
 google-generativeai
 pypdf2
