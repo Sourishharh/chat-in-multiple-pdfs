@@ -43,7 +43,7 @@ Backend:
 
     source venv/bin/activate     # this Code for Mac & Linux
 
-    venv\Scripts\activate      # this Code for windows
+    venv\Scripts\activate       # this Code for windows
 
 3. ## Install Dependencies: 
 
