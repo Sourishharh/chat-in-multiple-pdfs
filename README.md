@@ -22,30 +22,30 @@ Frontend: Streamlit for an interactive UI.
 
 Backend:
 
-PyPDF2 for PDF text extraction.
+  PyPDF2 for PDF text extraction.
 
-LangChain for chain management and processing.
+  LangChain for chain management and processing.
 
-FAISS for semantic indexing.
+  FAISS for semantic indexing.
 
-Google Generative AI for embeddings and conversational AI.
+  Google Generative AI for embeddings and conversational AI.
 
-Environment Management: python-dotenv for handling API keys.
+  Environment Management: python-dotenv for handling API keys.
 ## Installation
 
-1. Clone the Repository:
+1. ## Clone the Repository:
 
     git clone https://github.com/Sourishharh/chat-in-multiple-pdfs.git
 
-2. Set Up a Virtual Environment:
+2. ## Set Up a Virtual Environment:
 
     python -m venv venv
 
-    source venv/bin/activate # this Code for Mac & Linux
+    source venv/bin/activate     # this Code for Mac & Linux
 
-    venv\Scripts\activate # this Code for windows
+    venv\Scripts\activate      # this Code for windows
 
-3. Install Dependencies: 
+3. ## Install Dependencies: 
 
     pip install -r requirements.txt
 
@@ -91,7 +91,7 @@ Environment Management: python-dotenv for handling API keys.
     This project is licensed under the MIT License. See the LICENSE file for details.
 ## Acknowledgments
 
-    1.Streamlit
-    2.LangChain
-    3.Google Generative AI
-    4.FAISS
+   1. Streamlit: For the interactive UI framework.
+   2. LangChain: For managing complex chains of processing.
+   3. Google Generative AI: For embedding and conversational AI.
+   4. FAISS: For creating an efficient semantic index of the PDF content
