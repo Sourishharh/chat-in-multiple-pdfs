@@ -33,11 +33,11 @@ Backend:
   Environment Management: python-dotenv for handling API keys.
 ## Installation
 
-1. ## Clone the Repository:
+1. Clone the Repository:
 
     git clone https://github.com/Sourishharh/chat-in-multiple-pdfs.git
 
-2. ## Set Up a Virtual Environment:
+2.  Set Up a Virtual Environment:
 
     python -m venv venv
 
@@ -45,7 +45,7 @@ Backend:
 
     venv\Scripts\activate       # this Code for windows
 
-3. ## Install Dependencies: 
+3.  Install Dependencies: 
 
     pip install -r requirements.txt
 
