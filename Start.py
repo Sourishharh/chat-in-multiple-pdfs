@@ -1,47 +1,54 @@
-import streamlit as st 
+import streamlit as st
 from PyPDF2 import PdfReader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 import os
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
+import pickle
 import google.generativeai as genai
+from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
 from langchain.vectorstores import FAISS
-# from langchain_community.vectorstores import FAISS
-from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.chains.question_answering import load_qa_chain
 from langchain.prompts import PromptTemplate
 from dotenv import load_dotenv
+import concurrent.futures
 
-
-
-# Load environment variables 
+# Load environment variables
 load_dotenv()
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
-# Extract text from PDFs
+# Extract text from PDFs in parallel
 def get_pdf_text(pdf_docs):
     text = ""
-    for pdf in pdf_docs:
+    
+    def extract_text(pdf):
         pdf_reader = PdfReader(pdf)
-        for page in pdf_reader.pages:
-            text += page.extract_text()
-    return text
+        return " ".join([page.extract_text() for page in pdf_reader.pages if page.extract_text()])
+
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        results = executor.map(extract_text, pdf_docs)
+
+    return " ".join(results)
 
 # Split text into chunks
 def get_text_chunks(text):
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
-    chunks = text_splitter.split_text(text)
-    return chunks
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1500, chunk_overlap=100)
+    return text_splitter.split_text(text)
 
-# Create embeddings and vector store
+# Cache embeddings & vector store
 def get_vector_store(text_chunks):
     embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
-    vector_store = FAISS.from_texts(text_chunks, embedding=embeddings)
-    st.session_state.vector_store = vector_store
-    # st.write("Semantic index created with chunks :")
-    # for chunk in text_chunks:
-    #     st.write(chunk[:500])  # Display the first 500 characters of each chunk
 
-# Set up the conversational chain & LLM
+    # Check if vector store is cached
+    if os.path.exists("vector_store.pkl"):
+        with open("vector_store.pkl", "rb") as f:
+            vector_store = pickle.load(f)
+    else:
+        vector_store = FAISS.from_texts(text_chunks, embedding=embeddings)
+        with open("vector_store.pkl", "wb") as f:
+            pickle.dump(vector_store, f)
+
+    st.session_state.vector_store = vector_store
+
+# Set up conversational chain with optimized prompt
 def get_conversational_chain():
     prompt_template = """
     Answer the question in English as accurately as possible from the provided context. 
@@ -53,12 +60,12 @@ def get_conversational_chain():
 
     Answer:
     """
-    model = ChatGoogleGenerativeAI(model="gemini-pro", temperature=0.3)
+    model = ChatGoogleGenerativeAI(model="gemini-pro", temperature=0, max_output_tokens=200)
     prompt = PromptTemplate(template=prompt_template, input_variables=["context", "question"])
     chain = load_qa_chain(model, chain_type="stuff", prompt=prompt)
     return chain
 
-# Process user query
+# Process user query efficiently
 def user_input(user_question):
     if "chat_chain" not in st.session_state or st.session_state.chat_chain is None:
         st.warning("Chat chain is not initialized. Please process PDF files first.")
@@ -69,41 +76,27 @@ def user_input(user_question):
 
     vector_store = st.session_state.vector_store
     if vector_store:
-        docs = vector_store.similarity_search(user_question, k=3)
+        docs = vector_store.similarity_search(user_question, k=2)  # Reduced k for speed
         if not docs:
-            st.write("No documents retrieved for the query.")
+            st.write("No relevant documents found.")
             return
-
-        # st.write("Retrieved documents:")
-        # for doc in docs:
-        #     st.write(doc.page_content[:500])  # Display the first 500 characters of each document
 
         try:
             response = st.session_state.chat_chain.invoke({
                 "input_documents": docs,
-                "question": user_question,
-                "chat_history": st.session_state.chat_history
+                "question": user_question
             })
 
-            # st.write("Raw response:", response) # Debugging the structure of the response
-
-            # Extract the answer based on the observed structure of the response
-            if isinstance(response, dict) and "output_text" in response:
-                answer = response["output_text"]
-            elif isinstance(response, dict) and "answer" in response:
-                answer = response["answer"]
-            else:
-                answer = "Unexpected response format. Please check the response structure."
-
+            answer = response.get("output_text", "No answer found.")
             st.session_state.chat_history.append((user_question, answer))
-            st.write("Reply :  ",  answer)
+            st.write("Reply:", answer)
 
         except Exception as e:
             st.error(f"Error during response generation: {e}")
     else:
         st.warning("No vector store found. Please process the PDFs first.")
 
-# Main function
+# Main Streamlit app
 def main():
     st.set_page_config(page_title="PDF Chatbot with Memory", layout="wide")
     st.header("Chat with Multiple PDFs 📚")
