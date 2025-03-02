@@ -2,57 +2,51 @@ import streamlit as st
 from PyPDF2 import PdfReader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 import os
-import pickle
 import google.generativeai as genai
-from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
 from langchain.vectorstores import FAISS
+from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
 from langchain.chains.question_answering import load_qa_chain
 from langchain.prompts import PromptTemplate
 from dotenv import load_dotenv
-import concurrent.futures
 
 # Load environment variables
 load_dotenv()
-genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
-# Extract text from PDFs in parallel
+# Configure Google Generative AI
+API_KEY = os.getenv("GOOGLE_API_KEY")
+if API_KEY:
+    genai.configure(api_key=API_KEY)
+else:
+    st.error("Missing GOOGLE_API_KEY. Please check your .env file.")
+
+# Ensure we use the correct model
+MODEL_NAME = "gemini-1.5-pro"  # Change this if needed
+
+# Function to extract text from PDFs
 def get_pdf_text(pdf_docs):
     text = ""
-    
-    def extract_text(pdf):
+    for pdf in pdf_docs:
         pdf_reader = PdfReader(pdf)
-        return " ".join([page.extract_text() for page in pdf_reader.pages if page.extract_text()])
+        for page in pdf_reader.pages:
+            text += page.extract_text() or ""  # Handle None cases
+    return text.strip()
 
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        results = executor.map(extract_text, pdf_docs)
-
-    return " ".join(results)
-
-# Split text into chunks
+# Function to split text into chunks
 def get_text_chunks(text):
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1500, chunk_overlap=100)
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
     return text_splitter.split_text(text)
 
-# Cache embeddings & vector store
+# Function to create embeddings and vector store
 def get_vector_store(text_chunks):
     embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
-
-    # Check if vector store is cached
-    if os.path.exists("vector_store.pkl"):
-        with open("vector_store.pkl", "rb") as f:
-            vector_store = pickle.load(f)
-    else:
-        vector_store = FAISS.from_texts(text_chunks, embedding=embeddings)
-        with open("vector_store.pkl", "wb") as f:
-            pickle.dump(vector_store, f)
-
+    vector_store = FAISS.from_texts(text_chunks, embedding=embeddings)
     st.session_state.vector_store = vector_store
 
-# Set up conversational chain with optimized prompt
+# Function to set up the conversational chain
 def get_conversational_chain():
     prompt_template = """
-    Answer the question in English as accurately as possible from the provided context. 
-    If the context is not sufficient, explain what additional information is needed. 
+    Answer the question in English as accurately as possible from the provided context.
+    If the context is not sufficient, explain what additional information is needed.
     Avoid providing incorrect answers.
 
     Context:\n{context}\n
@@ -60,43 +54,40 @@ def get_conversational_chain():
 
     Answer:
     """
-    model = ChatGoogleGenerativeAI(model="gemini-pro", temperature=0, max_output_tokens=200)
+    model = ChatGoogleGenerativeAI(model=MODEL_NAME, temperature=0.3)
     prompt = PromptTemplate(template=prompt_template, input_variables=["context", "question"])
-    chain = load_qa_chain(model, chain_type="stuff", prompt=prompt)
-    return chain
+    return load_qa_chain(model, chain_type="stuff", prompt=prompt)
 
-# Process user query efficiently
+# Function to process user input
 def user_input(user_question):
-    if "chat_chain" not in st.session_state or st.session_state.chat_chain is None:
-        st.warning("Chat chain is not initialized. Please process PDF files first.")
+    if "vector_store" not in st.session_state or not st.session_state.vector_store:
+        st.warning("Please upload and process PDFs first.")
         return
 
-    if "chat_history" not in st.session_state:
-        st.session_state.chat_history = []
-
     vector_store = st.session_state.vector_store
-    if vector_store:
-        docs = vector_store.similarity_search(user_question, k=2)  # Reduced k for speed
-        if not docs:
-            st.write("No relevant documents found.")
-            return
+    docs = vector_store.similarity_search(user_question, k=3)
 
-        try:
-            response = st.session_state.chat_chain.invoke({
-                "input_documents": docs,
-                "question": user_question
-            })
+    if not docs:
+        st.write("No relevant documents found.")
+        return
 
-            answer = response.get("output_text", "No answer found.")
-            st.session_state.chat_history.append((user_question, answer))
-            st.write("Reply:", answer)
+    try:
+        response = st.session_state.chat_chain.invoke({
+            "input_documents": docs,
+            "question": user_question
+        })
 
-        except Exception as e:
-            st.error(f"Error during response generation: {e}")
-    else:
-        st.warning("No vector store found. Please process the PDFs first.")
+        # Extract answer based on response format
+        answer = response.get("output_text", response.get("answer", "Unexpected response format."))
 
-# Main Streamlit app
+        # Store chat history
+        st.session_state.chat_history.append((user_question, answer))
+        st.write("**Reply:**", answer)
+
+    except Exception as e:
+        st.error(f"Error generating response: {e}")
+
+# Main function
 def main():
     st.set_page_config(page_title="PDF Chatbot with Memory", layout="wide")
     st.header("Chat with Multiple PDFs 📚")
@@ -110,7 +101,7 @@ def main():
         st.session_state.chat_history = []
 
     # User input section
-    user_question = st.text_input("Ask a question from the uploaded PDF files:")
+    user_question = st.text_input("Ask a question from the uploaded PDFs:")
     if user_question:
         user_input(user_question)
 
@@ -124,10 +115,11 @@ def main():
     # Sidebar for PDF upload and processing
     with st.sidebar:
         st.title("Upload Your PDFs")
-        pdf_docs = st.file_uploader("Upload your PDF Files", accept_multiple_files=True)
+        pdf_docs = st.file_uploader("Upload PDF Files", accept_multiple_files=True)
+
         if st.button("Submit & Process"):
             if pdf_docs:
-                with st.spinner("Processing..."):
+                with st.spinner("Processing"):
                     raw_text = get_pdf_text(pdf_docs)
                     if raw_text:
                         text_chunks = get_text_chunks(raw_text)
@@ -135,9 +127,9 @@ def main():
                         st.session_state.chat_chain = get_conversational_chain()
                         st.success("PDF processing complete! You can now ask questions.")
                     else:
-                        st.error("No text could be extracted from the uploaded PDFs.")
+                        st.error("No extractable text found in uploaded PDFs.")
             else:
-                st.error("Please upload at least one PDF file.")
+                st.error("Please upload at least one PDF.")
 
 if __name__ == "__main__":
     main()
