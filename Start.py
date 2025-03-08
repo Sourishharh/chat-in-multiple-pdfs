@@ -17,10 +17,18 @@ API_KEY = os.getenv("GOOGLE_API_KEY")
 if API_KEY:
     genai.configure(api_key=API_KEY)
 else:
-    st.error("Missing GOOGLE_API_KEY. Please check your .env file.")
+    st.error("❌ Missing GOOGLE_API_KEY. Please check your .env file.")
 
-# Ensure we use the correct model
-MODEL_NAME = "gemini-1.5-pro"  # Change this if needed
+# Ensure correct AI model
+MODEL_NAME = "gemini-1.5-pro"  # Change if needed
+
+# Initialize session state variables
+if "vector_store" not in st.session_state:
+    st.session_state.vector_store = None
+if "chat_chain" not in st.session_state:
+    st.session_state.chat_chain = None
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
 
 # Function to extract text from PDFs
 def get_pdf_text(pdf_docs):
@@ -42,7 +50,7 @@ def get_vector_store(text_chunks):
     vector_store = FAISS.from_texts(text_chunks, embedding=embeddings)
     st.session_state.vector_store = vector_store
 
-# Function to set up the conversational chain
+# Function to set up conversational chain
 def get_conversational_chain():
     prompt_template = """
     Answer the question in English as accurately as possible from the provided context.
@@ -60,15 +68,15 @@ def get_conversational_chain():
 
 # Function to process user input
 def user_input(user_question):
-    if "vector_store" not in st.session_state or not st.session_state.vector_store:
-        st.warning("Please upload and process PDFs first.")
+    if not st.session_state.vector_store:
+        st.warning("⚠️ Please upload and process PDFs first.")
         return
 
     vector_store = st.session_state.vector_store
     docs = vector_store.similarity_search(user_question, k=3)
 
     if not docs:
-        st.write("No relevant documents found.")
+        st.write("❌ No relevant documents found.")
         return
 
     try:
@@ -77,7 +85,6 @@ def user_input(user_question):
             "question": user_question
         })
 
-        # Extract answer based on response format
         answer = response.get("output_text", response.get("answer", "Unexpected response format."))
 
         # Store chat history
@@ -85,23 +92,15 @@ def user_input(user_question):
         st.write("**Reply:**", answer)
 
     except Exception as e:
-        st.error(f"Error generating response: {e}")
+        st.error(f"❌ Error generating response: {e}")
 
 # Main function
 def main():
-    st.set_page_config(page_title="PDF Chatbot with Memory", layout="wide")
-    st.header("Chat with Multiple PDFs 📚")
-
-    # Initialize session state variables
-    if "vector_store" not in st.session_state:
-        st.session_state.vector_store = None
-    if "chat_chain" not in st.session_state:
-        st.session_state.chat_chain = None
-    if "chat_history" not in st.session_state:
-        st.session_state.chat_history = []
+    st.set_page_config(page_title="📚 PDF Chatbot with Memory", layout="wide")
+    st.header("💬 Chat with Multiple PDFs")
 
     # User input section
-    user_question = st.text_input("Ask a question from the uploaded PDFs:")
+    user_question = st.text_input("📝 Ask a question from the uploaded PDFs:")
     if user_question:
         user_input(user_question)
 
@@ -114,22 +113,23 @@ def main():
 
     # Sidebar for PDF upload and processing
     with st.sidebar:
-        st.title("Upload Your PDFs")
+        st.title("📁 Upload Your PDFs")
         pdf_docs = st.file_uploader("Upload PDF Files", accept_multiple_files=True)
 
-        if st.button("Submit & Process"):
+        # Process PDFs
+        if st.button("📂 Submit & Process"):
             if pdf_docs:
-                with st.spinner("Processing"):
+                with st.spinner("🔄 Processing..."):
                     raw_text = get_pdf_text(pdf_docs)
                     if raw_text:
                         text_chunks = get_text_chunks(raw_text)
                         get_vector_store(text_chunks)
                         st.session_state.chat_chain = get_conversational_chain()
-                        st.success("PDF processing complete! You can now ask questions.")
+                        st.success("✅ PDF processing complete! You can now ask questions.")
                     else:
-                        st.error("No extractable text found in uploaded PDFs.")
+                        st.error("❌ No extractable text found in uploaded PDFs.")
             else:
-                st.error("Please upload at least one PDF.")
+                st.error("⚠️ Please upload at least one PDF.")
 
 if __name__ == "__main__":
     main()
