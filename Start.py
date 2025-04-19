@@ -17,10 +17,9 @@ API_KEY = os.getenv("GOOGLE_API_KEY")
 if API_KEY:
     genai.configure(api_key=API_KEY)
 else:
-    st.error("❌ Missing GOOGLE_API_KEY. Please check your .env file.")
+    st.error("Missing GOOGLE_API_KEY. Please check your .env file.")
 
-# Ensure correct AI model
-MODEL_NAME = "gemini-1.5-pro"  # Change if needed
+MODEL_NAME = "gemini-1.5-pro"  
 
 # Initialize session state variables
 if "vector_store" not in st.session_state:
@@ -76,7 +75,7 @@ def user_input(user_question):
     docs = vector_store.similarity_search(user_question, k=3)
 
     if not docs:
-        st.write("❌ No relevant documents found.")
+        st.write(" No relevant documents found.")
         return
 
     try:
@@ -92,7 +91,7 @@ def user_input(user_question):
         st.write("**Reply:**", answer)
 
     except Exception as e:
-        st.error(f"❌ Error generating response: {e}")
+        st.error(f" Error generating response: {e}")
 
 # Main function
 def main():
@@ -125,9 +124,9 @@ def main():
                         text_chunks = get_text_chunks(raw_text)
                         get_vector_store(text_chunks)
                         st.session_state.chat_chain = get_conversational_chain()
-                        st.success("✅ PDF processing complete! You can now ask questions.")
+                        st.success(" PDF processing complete! You can now ask questions.")
                     else:
-                        st.error("❌ No extractable text found in uploaded PDFs.")
+                        st.error(" No extractable text found in uploaded PDFs.")
             else:
                 st.error("⚠️ Please upload at least one PDF.")
 
