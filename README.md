@@ -9,7 +9,6 @@
 * 📂 **Upload and Process PDFs** → Upload multiple PDFs for text extraction & indexing.
 * 🔎 **Semantic Search** → Uses **Google Generative AI Embeddings** with FAISS.
 * 🤖 **Conversational AI** → Ask questions in natural language, get answers from your PDFs.
-* 🧠 **Memory Support** → Retains conversation history for contextual responses.
 * 🚨 **Error Handling** → Detects invalid files, empty queries, and shows feedback.
 
 ---
