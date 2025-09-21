@@ -1,97 +1,101 @@
+# 📚 Chat with Multiple PDFs
 
-# Chat with Multiple PDFs
+> ⚡ Chat with Multiple PDFs is a Streamlit-based application that allows users to interactively query and retrieve information from multiple PDF files. This tool uses state-of-the-art AI models for natural language understanding, making it an ideal companion for researchers, students, and professionals who need quick answers from large documents.
 
+---
 
-## Overview
+## ✨ Features
 
-"Chat with Multiple PDFs" is a Streamlit-based application that allows users to interactively query and retrieve information from multiple PDF files. This tool uses state-of-the-art AI models for natural language understanding, making it an ideal companion for researchers, students, and professionals who need quick answers from large documents.
-## Features
+* 📂 **Upload and Process PDFs** → Upload multiple PDFs for text extraction & indexing.
+* 🔎 **Semantic Search** → Uses **Google Generative AI Embeddings** with FAISS.
+* 🤖 **Conversational AI** → Ask questions in natural language, get answers from your PDFs.
+* 🧠 **Memory Support** → Retains conversation history for contextual responses.
+* 🚨 **Error Handling** → Detects invalid files, empty queries, and shows feedback.
 
-I. Upload and Process PDFs: Upload multiple PDFs for text extraction and indexing.
+---
 
-II. Semantic Search: Create a semantic index of the extracted text using Google Generative AI Embeddings.
+## 🛠️ Tech Stack
 
-III. Conversational AI: Ask natural language questions, and the chatbot will provide accurate answers based on the PDF content.
+| Component             | Technology                                       |
+| --------------------- | ------------------------------------------------ |
+| 🎨 **Frontend**       | Streamlit (Interactive UI)                       |
+| ⚙️ **Backend**        | PyPDF2 (Text Extraction), LangChain (Processing) |
+| 🧾 **Indexing**       | FAISS (Semantic Indexing)                        |
+| 🧠 **AI Models**      | Google Generative AI (Embeddings + Chatbot)      |
+| 🔑 **Env Management** | python-dotenv                                    |
 
-IV. Memory: Retains conversation history for a more personalized and contextual experience.
+---
 
-V. Error Handling: Provides feedback for issues such as invalid files or empty queries.
-## Tech Stack
+## 🚀 Installation
 
-Frontend: Streamlit for an interactive UI.
+```bash
+# 1. Clone the Repository
+git clone https://github.com/Sourishharh/chat-in-multiple-pdfs.git
 
-Backend:
+# 2. Create & Activate Virtual Environment
+python -m venv venv
 
-  PyPDF2 for PDF text extraction.
+# For Mac/Linux
+source venv/bin/activate
 
-  LangChain for chain management and processing.
+# For Windows
+venv\Scripts\activate
 
-  FAISS for semantic indexing.
+# 3. Install Dependencies
+pip install -r requirements.txt
+```
 
-  Google Generative AI for embeddings and conversational AI.
+👉 Create a `.env` file and add your API key:
 
-  Environment Management: python-dotenv for handling API keys.
-## Installation
+```env
+GOOGLE_API_KEY=your_google_api_key_here
+```
 
-1. Clone the Repository:
+---
 
-    git clone https://github.com/Sourishharh/chat-in-multiple-pdfs.git
+## ▶️ Usage
 
-2.  Set Up a Virtual Environment:
+1. **Run the App**
 
-    python -m venv venv
+   ```bash
+   streamlit run app.py
+   ```
 
-    source venv/bin/activate     # this Code for Mac & Linux
+2. **Upload PDFs**
 
-    venv\Scripts\activate       # this Code for windows
+   * 📥 Use sidebar to upload files.
+   * ⚡ Click `Submit & Process` to extract and index.
 
-3.  Install Dependencies: 
+3. **Ask Questions**
 
-    pip install -r requirements.txt
+   * ❓ Type your query in the input box.
+   * 💬 View answers + conversation history.
 
-4. Set Up API Keys:
- 
-    Create a .env file in the project root.
+---
 
-    Add your Google Generative AI API Key:
+## 📂 File Structure
 
-    GOOGLE_API_KEY=your_google_api_key_here
-    
+```
+chat-with-pdfs/
+├── app.py                 
+├── requirements.txt       
+├── .env                   
+├── README.md              
+└── ... (other files)
+```
 
-## Usage
+---
 
-1. Run the Application:
+## 📜 License
 
-    streamlit run app.py
+📝 This project is licensed under the **MIT License**.
+See the [LICENSE](./LICENSE) file for details.
 
-2. Upload PDFs:
-    
-    i. Use the sidebar to upload multiple PDF files.
+---
 
-    ii.Click "Submit & Process" to extract and index the content.
+## 🙌 Acknowledgments
 
-3. Ask Questions:
-    
-    i. Enter your question in the input box and get answers based on the PDF content.
-
-    ii.View conversation history for reference.
-
-
-## File Structure
-
-    chat-with-pdfs/
-    ├── app.py                 
-    ├── requirements.txt       
-    ├── .env                   
-    ├── README.md              
-    └── ... (other files and folders)
-
-    
-## LICENSE
-    This project is licensed under the MIT License. See the LICENSE file for details.
-## Acknowledgments
-
-   1. Streamlit: For the interactive UI framework.
-   2. LangChain: For managing complex chains of processing.
-   3. Google Generative AI: For embedding and conversational AI.
-   4. FAISS: For creating an efficient semantic index of the PDF content
+* 🎨 **Streamlit** → For the interactive UI framework.
+* 🔗 **LangChain** → For managing complex chains of processing.
+* 🤖 **Google Generative AI** → For embeddings & conversational AI.
+* ⚡ **FAISS** → For efficient semantic indexing.
