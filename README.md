@@ -57,7 +57,7 @@ GOOGLE_API_KEY=your_google_api_key_here
 1. **Run the App**
 
    ```bash
-   streamlit run app.py
+   streamlit run Start.py
    ```
 
 2. **Upload PDFs**
